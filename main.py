@@ -16,38 +16,18 @@ MINSUP = 0.144
 R = 'right'
 L = 'left'
 M = 'middle'
-#ID = 'itemset'
 VAL = 'count'
 
 def tree():
     return defaultdict(tree, count = 0, isLeaf = False)
 
 def add(t, keys, id):
-    #idcnt = 0
-    #pos = ''
     for key in keys:
         if(cmp(key,'') != 0):                        #skip the None string
             t = t[key]
-    #pos = pos + id[idcnt]
     leaft = t[id]
     leaft['isLeaf'] = True
     leaft[VAL] = leaft.get(VAL) + 1
-    #idcnt += 1
-
- #   t[ID] = id
-
-#def dicts(t): return {k: dicts(t[k]) for k in t}
-'''
-def power_set(s):
-    n = len(s)
-    test_marks = [ 1<<i for i in range(0, n) ]
-    for k in range(0, 2**n):
-        l = []
-        for idx, item in enumerate(test_marks):
-            if k&item:
-                l.append(s[idx])
-        yield set(l)
-'''
 
 def LexOrderSubset(originset):
     allset =[]
@@ -61,43 +41,11 @@ def LexOrderSubset(originset):
         allset.append(ele)
     return allset
 
-
-def Prune(C, F, k):
-    for tup in C.keys():
-        tuplist = tup.split(',')
-        curele = -1
-        for i in tuplist:
-            if curele > int(i):
-                del C[tup]
-                break
-            else:
-                curele = int(i)
-                if cmp(i, '10') != 0:
-                    pos = tup.index(i)
-                    if len(tup) > pos + 1:
-                        tmptup = tup[:pos] + tup[pos+2:]
-                    else:
-                        tmptup = tup[:-2]
-                    if F.has_key(tmptup) == False:
-                        del C[tup]
-                        break
-                else:
-                     pos = tup.index(i)
-                     if len(tup) > pos + 2:
-                        tmptup = tup[:pos] + tup[pos+3:]
-                     else:
-                        tmptup = tup[:-3]
-                     if F.has_key(tmptup) == False:
-                        del C[tup]
-                        break
-
-
-
 def Aprioi(HashTree):
     k = 0
     F = {}
     C = {}
-    F[k] = {'0':0,'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0, '10':0}
+    F[k] = {'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0, '10':0, '11':0}
     for i in F[k]:
         F[k][i] = SupportCount(HashTree, i.split(','))
     while len(F[k]) != 0:
@@ -124,11 +72,38 @@ def Aprioi(HashTree):
             C[k+1][i] = SupportCount(HashTree, strlist)
             if float(C[k+1][i])/float(TRANSNUM) < (MINSUP - 0.001):
                 del C[k+1][i]
-
         F[k+1] = C[k+1]
         k = k + 1
-
     return F
+
+def Prune(C, F, k):
+    for tup in C.keys():
+        tuplist = tup.split(',')
+        curele = -1
+        for i in tuplist:
+            if curele > int(i):
+                del C[tup]
+                break
+            else:
+                curele = int(i)
+                if cmp(i, '10') != 0 and cmp(i, '11') !=0:
+                    pos = tup.index(i)
+                    if len(tup) > pos + 1:
+                        tmptup = tup[:pos] + tup[pos+2:]
+                    else:
+                        tmptup = tup[:-2]
+                    if F.has_key(tmptup) == False:
+                        del C[tup]
+                        break
+                else:
+                     pos = tup.index(i)
+                     if len(tup) > pos + 2:
+                        tmptup = tup[:pos] + tup[pos+3:]
+                     else:
+                        tmptup = tup[:-3]
+                     if F.has_key(tmptup) == False:
+                        del C[tup]
+                        break
 
 def SupportCount(HashTree, id):
     tmpHashTree = HashTree
@@ -149,39 +124,14 @@ def SupportCount(HashTree, id):
                 #tmpHashTree = tmpHashTree[tmppos]
     return tmpHashTree[tmppos][VAL]
 
-'''
-def BuildHashTree(transcnt, itemcnt, data, str):
-        if(itemcnt >= 11):
-            HashTree = tree()
-            add(HashTree, str.split(','))
-            return HashTree
-        else:
-            if(data[transcnt][itemcnt] == '1'):
-                if(math.fmod(itemcnt, 3) == 0):
-                    return BuildHashTree(transcnt, itemcnt+1, data, str + ',' + L)
-                if(math.fmod(itemcnt, 3) == 1):
-                    return BuildHashTree(transcnt, itemcnt+1, data, str + ',' + M)
-                if(math.fmod(itemcnt, 3) == 2):
-                    return BuildHashTree(transcnt, itemcnt+1, data, str + ',' + R)
-            else:
-                return BuildHashTree(transcnt, itemcnt+1, data, str)
-'''
-
-def InputData():
-    inputFile = open(DATAPATH, 'r')
-    inputRead = inputFile.readlines()
-    inputFile.close()
-    return inputRead
-
 def BuildHashTree(inputRead):
     HashTree = tree()
-
     for inputline in inputRead:
         if(len(inputline) > 23):                #skip the first line:1 2 3 4 5 6 7 8 9 10 11\n
             continue
         tmpID = ''
-        for itemcnt in xrange(0, ITEMSNUM):
-            if(inputline[2*itemcnt]  == '1'):
+        for itemcnt in xrange(1, ITEMSNUM+1):
+            if(inputline[2*(itemcnt-1)]  == '1'):
                 if(math.fmod(itemcnt, 3) == 0):
                     tmpID = tmpID + ',' + str(itemcnt)
                 if(math.fmod(itemcnt, 3) == 1):
@@ -203,17 +153,47 @@ def BuildHashTree(inputRead):
                     tmppos = tmppos + ',' + R
                 tmpID = tmpID + i
             add(HashTree, tmppos.split(','), tmpID)
-
-            #DATA[transcnt][itemcnt] = inputline[2*itemcnt]            #data from transcnt = 1, the 0 line is item
-
     return HashTree
+
+def InputData():
+    inputFile = open(DATAPATH, 'r')
+    inputRead = inputFile.readlines()
+    inputFile.close()
+    return inputRead
 
 def OutputResult(result):
     outputFile = open(OUTPUTPATH, 'w+')
+    '''
+    tmp = {}
+    for i in result:
+        tmp[i] = {}
+        if len(result[i]) != 0:
+            for j in result[i]:
+                jlist = j.split(',')
+                tmpstr = ''
+                for k in jlist:
+                    tmpstr = tmpstr + k
+                tmp[i][tmpstr] = result[i][j]
+    '''
+    resultPlus = {}
     for i in result:
         if len(result[i]) != 0:
             for j in result[i]:
-                outputFile.write(j+' '+ str(float(result[i][j])/float(TRANSNUM)) + '\n\r')
+                jlist = j.split(',')
+                tmpstr = ''
+                for k in jlist:
+                    tmpstr = tmpstr + ' ' + k
+                resultPlus[tmpstr[1:]] = result[i][j]
+    '''
+    outputTree = tree()
+    itemlist = resultPlus.iteritems().split(' ')
+    items = sorted(resultPlus[i].items(),key=lambda d:d[0])
+    for key,value in items:
+    '''
+    for i in resultPlus:
+        #print key, value # print key,dict[key]
+        #outputFile.write(key + ' '+ str(float(value)/float(TRANSNUM)) + '\n\r')
+        outputFile.write(i + ' '+ str(float(resultPlus[i])/float(TRANSNUM)) + '\n\r')
     outputFile.close()
 
 def main():
@@ -222,8 +202,6 @@ def main():
     HashTree = BuildHashTree(inputRead)
     result = Aprioi(HashTree)
     OutputResult(result)
-
-#   SupportCount(data)
     end = time.clock()
     print 'runing time is '
     print end
