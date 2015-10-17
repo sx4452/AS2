@@ -86,24 +86,15 @@ def Prune(C, F, k):
                 break
             else:
                 curele = int(i)
-                if cmp(i, '10') != 0 and cmp(i, '11') !=0:
-                    pos = tup.index(i)
-                    if len(tup) > pos + 1:
-                        tmptup = tup[:pos] + tup[pos+2:]
-                    else:
-                        tmptup = tup[:-2]
-                    if F.has_key(tmptup) == False:
-                        del C[tup]
-                        break
+                pos = tup.index(i)
+                if len(tup) > pos + len(i):
+                    tmptup = tup[:pos] + tup[pos+len(i)+1:]
                 else:
-                     pos = tup.index(i)
-                     if len(tup) > pos + 2:
-                        tmptup = tup[:pos] + tup[pos+3:]
-                     else:
-                        tmptup = tup[:-3]
-                     if F.has_key(tmptup) == False:
-                        del C[tup]
-                        break
+                    tmptup = tup[:-(len(i)+1)]
+                if F.has_key(tmptup) == False:
+                    del C[tup]
+                    break
+
 
 def SupportCount(HashTree, id):
     tmpHashTree = HashTree
@@ -161,6 +152,20 @@ def InputData():
     inputFile.close()
     return inputRead
 
+def DFSoutput(curNode, tmppos, resultPlus, outputFile):
+    lasti = ''
+    for i in curNode:
+        if isinstance(i, int):
+            if cmp(lasti, '') != 0:
+                tmppos = tmppos[:-(len(str(lasti))+1)]
+            tmppos = tmppos + ' ' + str(i)
+            lasti = i
+            outputFile.write(tmppos[1:] + ' '+ str(float(resultPlus[tmppos[1:]])/float(TRANSNUM)) + '\n\r')
+            curNode[i][VAL] = 1
+            DFSoutput(curNode[i], tmppos, resultPlus, outputFile)
+
+
+
 def OutputResult(result):
     outputFile = open(OUTPUTPATH, 'w+')
     '''
@@ -184,16 +189,44 @@ def OutputResult(result):
                 for k in jlist:
                     tmpstr = tmpstr + ' ' + k
                 resultPlus[tmpstr[1:]] = result[i][j]
+    resultList = resultPlus.keys()
+
+    for i in xrange(0, len(resultList)):
+#        resultList[i] = {}
+        resultList[i] = resultList[i].split(' ')
+        for j in xrange(0,len(resultList[i])):
+            resultList[i][j] = int(resultList[i][j])
+
+
+    sortlist = sorted(resultList, key = lambda d:d[0])
+    #sortlistPlus = sorted(sortlist, key = lambda d:d[1])
+    '''
+    for i in xrange(0,ITEMSNUM):
+        for j in xrange(0,len(resultList)):
+            for k in xrange(0,len(resultList)):
+                if k>j and len(resultList[k])>i and len(resultList[j])>i and int(resultList[k][i]) < (resultList[j][i]):
+                    tmpele = resultList[j][i]
+                    resultList[j][i] = resultList[k][i]
+                    resultList[k][i] = tmpele
+
+    for i in resultList:
+        outputFile.write(i + ' '+ str(float(resultPlus[i])/float(TRANSNUM)) + '\n\r')
+    '''
+    resultTree = tree()
+    curNode = resultTree
+    for sublist in resultList:
+        curNode = resultTree
+        for ele in sublist:
+            curNode = curNode[ele]
+
+    DFSoutput(resultTree, '', resultPlus, outputFile)
+
     '''
     outputTree = tree()
     itemlist = resultPlus.iteritems().split(' ')
     items = sorted(resultPlus[i].items(),key=lambda d:d[0])
     for key,value in items:
     '''
-    for i in resultPlus:
-        #print key, value # print key,dict[key]
-        #outputFile.write(key + ' '+ str(float(value)/float(TRANSNUM)) + '\n\r')
-        outputFile.write(i + ' '+ str(float(resultPlus[i])/float(TRANSNUM)) + '\n\r')
     outputFile.close()
 
 def main():
